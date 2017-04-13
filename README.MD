@@ -3,7 +3,7 @@
 ## Description
 This is the source code for an express application that exposes a REST API to add jobs to a queue and check their status
 
-##To Run
+## To Run
 To run for the first time, run `npm install`
 Additionally, make sure that you have redis installed. If you have redis installed,
 simply run `redis-server` then `node app.js` after redis is running.
@@ -25,6 +25,6 @@ Create a job:
 
 Get a job by `:id`:
 
-```js
+    $ curl -H "Content-Type: application/json" -X GET http://localhost:3000/jobStatus?id=1
+
     {"jobID":"1", "jobStatus":"complete", "parsedHTML":'html'}
-```
