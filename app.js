@@ -1,50 +1,75 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+var express               = require('express');
+var path                  = require('path');
+var JobQueue              = require('./jobqueue/queue');
+var Database              = require('./database/database')
+var bodyParser            = require('body-parser');
+var firebase              = require("firebase");
+var kue                   = require('kue');
+//var parseWebsite          = require('./parseWebsite/parseWebsite');
+const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 
-var index = require('./routes/index');
-var users = require('./routes/users');
-
-var app = express();
-
-// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+var PORT                       = '3000';
+var HOST                       = 'http://localhost';
+var jobQueue;
+var database;
 
-app.use('/', index);
-app.use('/users', users);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+app.get('/', function (req, res) {
+    res.render('index', {title: 'Express'});
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+app.post('/addJob', function (req, res) {
+    jobQueue.addJob(req.body.url, function (id, error) {
+        if (error) {
+            res.writeHead(404);
+            res.write('ERROR, could not create job');
+            res.end();
+        } else {
+            res.writeHead(200);
+            res.write('Job id:' + id);
+            res.end();
+        }
+    });
 });
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!')
-})
+app.get('/jobStatus', function (req, res) {
+    jobQueue.jobStatus(req.query.id, function (status,jobID, error) {
+        if (error) {
+            res.writeHead(404);
+            res.write('ERROR, Invalid ID');
+            res.end();
+        } else {
+            res.writeHead(200);
+            res.write(status);
+            if (status === 'complete'){
+                database.retrieveHTML(jobID, function (html) {
+                    res.write(html);
+                    res.end();
+                });
+            } else {
+              res.end();
+            }
+        }
+    });
+});
 
-module.exports = app;
+function beginListening() {
+    database = new Database();
+    var queue = kue.createQueue();
+    jobQueue = new JobQueue(database, queue);
+}
+
+app.listen(PORT, function () {
+    beginListening();
+    var worker = kue.createQueue();
+    worker.process('siteToCrawl', function (job, done) {
+        database.addHTMLToDatabase(job.data.url, job.id , done);
+    });
+});

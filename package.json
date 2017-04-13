@@ -1,12 +1,13 @@
 {
   "name": "jobqueue",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./app.js"
   },
   "dependencies": {
-    "body-parser": "~1.17.1",
+    "bluebird": "^3.5.0",
+    "body-parser": "^1.17.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
@@ -15,7 +16,7 @@
     "kue": "^0.11.5",
     "morgan": "~1.8.1",
     "mysql": "^2.13.0",
-    "node-horseman": "^3.3.0",
-    "serve-favicon": "~2.4.2"
+    "request": "^2.81.0",
+    "serve-favicon": "~2.4.2",
   }
 }
