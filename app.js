@@ -20,11 +20,12 @@ var HOST                       = 'http://localhost';
 var jobQueue;
 var database;
 
-
+//Main homepage
 app.get('/', function (req, res) {
     res.render('index', {title: 'Express'});
 });
 
+//Route to add a job to the queue
 app.post('/addJob', function (req, res) {
     jobQueue.addJob(req.body.url, function (id, error) {
         if (error) {
@@ -32,40 +33,42 @@ app.post('/addJob', function (req, res) {
             res.write('ERROR, could not create job');
             res.end();
         } else {
-            res.writeHead(200);
-            res.write('Job id:' + id);
+            //res.writeHead(200);
+            res.json({ message: 'Job Created', jobID : id });
             res.end();
         }
     });
 });
 
+//Route to check the status of a job
 app.get('/jobStatus', function (req, res) {
-    jobQueue.jobStatus(req.query.id, function (status,jobID, error) {
+    jobQueue.jobStatus(req.query.id, function (status,id, error) {
         if (error) {
             res.writeHead(404);
             res.write('ERROR, Invalid ID');
             res.end();
         } else {
-            res.writeHead(200);
-            res.write(status);
             if (status === 'complete'){
-                database.retrieveHTML(jobID, function (html) {
-                    res.write(html);
+                database.retrieveHTML(id, function (html) {
+                    res.json({jobID : id, jobStatus : status, parsedHTML : html });
                     res.end();
                 });
             } else {
+              res.json({jobID : id, jobStatus : status, parsedHTML: "Unavailable"});
               res.end();
             }
         }
     });
 });
 
+//Setup the server to begin listening
 function beginListening() {
     database = new Database();
     var queue = kue.createQueue();
     jobQueue = new JobQueue(database, queue);
 }
 
+//Run the server
 app.listen(PORT, function () {
     beginListening();
     var worker = kue.createQueue();

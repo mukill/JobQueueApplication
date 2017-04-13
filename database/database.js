@@ -1,6 +1,7 @@
 var firebase = require('firebase');
 var request = require('request');
 class Database {
+
     constructor() {
       var config = {
           apiKey: "AIzaSyDq7bE7_SylOn17tYo2hnf9Lk5vGYK0vb4",
