@@ -17,7 +17,7 @@ Create a job:
 
     $ curl -H "Content-Type: application/json" -X POST -d \
         '{
-           "url": "www.google.com",
+           "url": "www.google.com"
          }' http://localhost:3000/addJob
     {"message": "Job Created", "jobID": 3}
 
